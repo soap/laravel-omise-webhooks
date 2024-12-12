@@ -1,0 +1,11 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Access to an undefined property Spatie\\\\WebhookClient\\\\Models\\\\WebhookCall\\:\\:\\$type\\.$#"
+			count: 1
+			path: src/Exceptions/WebhookFailed.php
+
+		-
+			message: "#^Unsafe usage of new static\\(\\)\\.$#"
+			count: 2
+			path: src/Exceptions/WebhookFailed.php

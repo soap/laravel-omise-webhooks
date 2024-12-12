@@ -1,0 +1,52 @@
+<?php
+
+// config for Soap/OmiseWebhooks
+return [
+    /*
+     * Stripe will sign each webhook using a secret. You can find the used secret at the
+     * webhook configuration settings: https://dashboard.stripe.com/account/webhooks.
+     */
+    'signing_secret' => env('OMISE_WEBHOOK_SECRET'),
+
+    /*
+     * You can define a default job that should be run for all other Stripe event type
+     * without a job defined in next configuration.
+     * You may leave it empty to store the job in database but without processing it.
+     */
+    'default_job' => '',
+
+    /*
+     * You can define the job that should be run when a certain webhook hits your application
+     * here. The key is the name of the Omise event type with the `.` replaced by a `_`.
+     *
+     * You can find a list of Omise webhook types here:
+     * https://docs.opn.ooo/api-webhooks#supported-events.
+     */
+    'jobs' => [
+        // 'source_chargeable' => \App\Jobs\OmiseWebhooks\HandleChargeableSource::class,
+        // 'charge_failed' => \App\Jobs\OmiseWebhooks\HandleFailedCharge::class,
+    ],
+
+    /*
+     * The classname of the model to be used. The class should equal or extend
+     * Spatie\WebhookClient\Models\WebhookCall.
+     */
+    'model' => \Spatie\WebhookClient\Models\WebhookCall::class,
+
+    /**
+     * This class determines if the webhook call should be stored and processed.
+     */
+    'profile' => \Soap\OmiseWebhooks\OmiseWebhookProfile::class,
+
+    /*
+     * Specify a connection and or a queue to process the webhooks
+     */
+    'connection' => env('OMISE_WEBHOOK_CONNECTION'),
+    'queue' => env('OMISE_WEBHOOK_QUEUE'),
+
+    /*
+     * When disabled, the package will not verify if the signature is valid.
+     * This can be handy in local environments.
+     */
+    'verify_signature' => env('OMISE_SIGNATURE_VERIFICATION', true),
+];

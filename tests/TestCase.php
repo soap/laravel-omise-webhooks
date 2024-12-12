@@ -1,10 +1,9 @@
 <?php
 
-namespace VendorName\Skeleton\Tests;
+namespace Soap\OmiseWebhooks\Tests;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use VendorName\Skeleton\SkeletonServiceProvider;
+use Soap\OmiseWebhooks\OmiseWebhooksServiceProvider;
 
 class TestCase extends Orchestra
 {
@@ -12,25 +11,63 @@ class TestCase extends Orchestra
     {
         parent::setUp();
 
-        Factory::guessFactoryNamesUsing(
-            fn (string $modelName) => 'VendorName\\Skeleton\\Database\\Factories\\'.class_basename($modelName).'Factory'
-        );
+        $this->setUpDatabase();
     }
 
     protected function getPackageProviders($app)
     {
         return [
-            SkeletonServiceProvider::class,
+            OmiseWebhooksServiceProvider::class,
         ];
     }
 
     public function getEnvironmentSetUp($app)
     {
-        config()->set('database.default', 'testing');
+        config()->set('database.default', 'sqlite');
+        config()->set('database.connections.sqlite', [
+            'driver' => 'sqlite',
+            'database' => ':memory:',
+            'prefix' => '',
+        ]);
 
-        /*
-        $migration = include __DIR__.'/../database/migrations/create_skeleton_table.php.stub';
+        config(['omise-webhooks.signing_secret' => 'test_signing_secret']);
+
+    }
+
+    protected function setUpDatabase()
+    {
+        $migration = include __DIR__.'/../vendor/spatie/laravel-webhook-client/database/migrations/create_webhook_calls_table.php.stub';
+
         $migration->up();
-        */
+    }
+
+    protected function disableExceptionHandling()
+    {
+        $this->app->instance(ExceptionHandler::class, new class extends Handler
+        {
+            public function __construct() {}
+
+            public function report(Exception $e) {}
+
+            public function render($request, Exception $exception)
+            {
+                throw $exception;
+            }
+        });
+    }
+
+    protected function determineStripeSignature(array $payload, ?string $configKey = null): string
+    {
+        $secret = ($configKey) ?
+            config("omise-webhooks.signing_secret_{$configKey}") :
+            config('omise-webhooks.signing_secret');
+
+        $timestamp = time();
+
+        $timestampedPayload = $timestamp.'.'.json_encode($payload);
+
+        $signature = hash_hmac('sha256', $timestampedPayload, $secret);
+
+        return "t={$timestamp},v1={$signature}";
     }
 }
