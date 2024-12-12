@@ -17,7 +17,7 @@ class OmiseSignatureValidator implements SignatureValidator
 
         $signature = $request->header('-Signature');
         $secret = $config->signingSecret;
-        
+
         /*
         try {
             //Webhook::constructEvent($request->getContent(), $signature, $secret);
@@ -25,7 +25,7 @@ class OmiseSignatureValidator implements SignatureValidator
             return false;
         }
         */
-        
+
         return true;
     }
 }
