@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Spatie\WebhookClient\Models\WebhookCall;
 use Spatie\WebhookClient\WebhookProfile\WebhookProfile;
 
-class OmiseWebhookProfile implements WebhookProfile
+class OmiseWebhooksProfile implements WebhookProfile
 {
     public function shouldProcess(Request $request): bool
     {

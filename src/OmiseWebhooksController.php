@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Spatie\WebhookClient\WebhookConfig;
 use Spatie\WebhookClient\WebhookProcessor;
 
-class StripeWebhooksController
+class OmiseWebhooksController
 {
     public function __invoke(Request $request, ?string $configKey = null)
     {
@@ -19,7 +19,7 @@ class StripeWebhooksController
             'signature_validator' => OmiseSignatureValidator::class,
             'webhook_profile' => config('omise-webhooks.profile'),
             'webhook_model' => config('omise-webhooks.model'),
-            'process_webhook_job' => ProcessOmiseWebhookJob::class,
+            'process_webhook_job' => ProcessOmiseWebhooksJob::class,
         ]);
 
         return (new WebhookProcessor($request, $webhookConfig))->process();

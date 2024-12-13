@@ -6,7 +6,7 @@ use Soap\OmiseWebhooks\Exceptions\WebhookFailed;
 use Spatie\WebhookClient\Jobs\ProcessWebhookJob;
 use Spatie\WebhookClient\Models\WebhookCall;
 
-class ProcessOmiseWebhookJob extends ProcessWebhookJob
+class ProcessOmiseWebhooksJob extends ProcessWebhookJob
 {
     public function __construct(WebhookCall $webhookCall)
     {

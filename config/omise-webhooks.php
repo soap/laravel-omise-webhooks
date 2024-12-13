@@ -9,7 +9,7 @@ return [
     'signing_secret' => env('OMISE_WEBHOOK_SECRET'),
 
     /*
-     * You can define a default job that should be run for all other Stripe event type
+     * You can define a default job that should be run for all other Omise event type
      * without a job defined in next configuration.
      * You may leave it empty to store the job in database but without processing it.
      */
