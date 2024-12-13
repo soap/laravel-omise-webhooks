@@ -25,7 +25,7 @@ return [
     'jobs' => [
         // 'card_destroy' => \App\Jobs\OmiseWebhooks\HandleCardDestroy::class,
         // 'card_update' => \App\Jobs\OmiseWebhooks\HandleCardUpdate::class,
-        
+
         // 'charge_capture' => \App\Jobs\OmiseWebhooks\HandleChargeCapture::class,
         // 'charge_create' => \App\Jobs\OmiseWebhooks\HandleChargeCreate::class,
         // 'charge_expire' => \App\Jobs\OmiseWebhooks\HandleChargeExpire::class,
