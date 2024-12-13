@@ -23,8 +23,41 @@ return [
      * https://docs.opn.ooo/api-webhooks#supported-events.
      */
     'jobs' => [
-        // 'source_chargeable' => \App\Jobs\OmiseWebhooks\HandleChargeableSource::class,
-        // 'charge_failed' => \App\Jobs\OmiseWebhooks\HandleFailedCharge::class,
+        // 'card_destroy' => \App\Jobs\OmiseWebhooks\HandleCardDestroy::class,
+        // 'card_update' => \App\Jobs\OmiseWebhooks\HandleCardUpdate::class,
+        
+        // 'charge_capture' => \App\Jobs\OmiseWebhooks\HandleChargeCapture::class,
+        // 'charge_create' => \App\Jobs\OmiseWebhooks\HandleChargeCreate::class,
+        // 'charge_expire' => \App\Jobs\OmiseWebhooks\HandleChargeExpire::class,
+        // 'charge_reverse' => \App\Jobs\OmiseWebhooks\HandleChargeReverse::class,
+        // 'charge_update' => \App\Jobs\OmiseWebhooks\HandleChargeUpdate::class,
+
+        // 'customer_create' => \App\Jobs\OmiseWebhooks\HandleCustomerCreate::class,
+        // 'customer_update' => \App\Jobs\OmiseWebhooks\HandleCustomerUpdate::class,
+        // 'customer_destroy' => \App\Jobs\OmiseWebhooks\HandleCustomerDestroy::class,
+        // 'customer_update_card' => \App\Jobs\OmiseWebhooks\HandleCustomerUpdateCard::class,
+
+        // 'dispute_create' => \App\Jobs\OmiseWebhooks\HandleDisputeCreate::class,
+        // 'dispute_update' => \App\Jobs\OmiseWebhooks\HandleDisputeUpdate::class,
+        // 'dispute_destroy' => \App\Jobs\OmiseWebhooks\HandleDisputeDestroy::class,
+        // 'dispute_activate' => \App\Jobs\OmiseWebhooks\HandleDisputeActivate::class,
+        // 'dispute_deactivate' => \App\Jobs\OmiseWebhooks\HandleDisputeDeactivate::class,
+        // 'dispute_verify' => \App\Jobs\OmiseWebhooks\HandleDisputeVerify::class,
+
+        // 'refund_create' => \App\Jobs\OmiseWebhooks\HandleRefundCreate::class,
+
+        // 'schedule_create' => \App\Jobs\OmiseWebhooks\HandleScheduleCreate::class,
+        // 'schedule_destroy' => \App\Jobs\OmiseWebhooks\HandleScheduleDestroy::class,
+        // 'schedule_expire' => \App\Jobs\OmiseWebhooks\HandleScheduleExpire::class,
+        // 'schedule_expiring' => \App\Jobs\OmiseWebhooks\HandleScheduleExpiring::class,
+        // 'schedule_suspend' => \App\Jobs\OmiseWebhooks\HandleScheduleSuspend::class,
+
+        // 'transfer_create' => \App\Jobs\OmiseWebhooks\HandleTransferCreate::class,
+        // 'transfer_update' => \App\Jobs\OmiseWebhooks\HandleTransferUpdate::class,
+        // 'transfer_destroy' => \App\Jobs\OmiseWebhooks\HandleTransferDestroy::class,
+        // 'transfer_fail' => \App\Jobs\OmiseWebhooks\HandleTransferFail::class,
+        // 'transfer_pay' => \App\Jobs\OmiseWebhooks\HandleTransferPay::class,
+        // 'transfer_send' => \App\Jobs\OmiseWebhooks\HandleTransferSend::class,
     ],
 
     /*
