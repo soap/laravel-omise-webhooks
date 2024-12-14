@@ -17,13 +17,13 @@ class ProcessOmiseWebhooksJob extends ProcessWebhookJob
 
     public function handle()
     {
-        if (! isset($this->webhookCall->payload['type']) || $this->webhookCall->payload['type'] === '') {
+        if (! isset($this->webhookCall->payload['key']) || $this->webhookCall->payload['key'] === '') {
             throw WebhookFailed::missingType($this->webhookCall);
         }
 
-        event("omise-webhooks::{$this->webhookCall->payload['type']}", $this->webhookCall);
+        event("omise-webhooks::{$this->webhookCall->payload['key']}", $this->webhookCall);
 
-        $jobClass = $this->determineJobClass($this->webhookCall->payload['type']);
+        $jobClass = $this->determineJobClass($this->webhookCall->payload['key']);
 
         if ($jobClass === '') {
             return;

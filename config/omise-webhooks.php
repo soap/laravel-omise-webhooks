@@ -3,8 +3,7 @@
 // config for Soap/OmiseWebhooks
 return [
     /*
-     * Stripe will sign each webhook using a secret. You can find the used secret at the
-     * webhook configuration settings: https://dashboard.stripe.com/account/webhooks.
+     * Omise doest not sign each webhook using a secret. This may be added in the future.
      */
     'signing_secret' => env('OMISE_WEBHOOK_SECRET'),
 
@@ -17,7 +16,7 @@ return [
 
     /*
      * You can define the job that should be run when a certain webhook hits your application
-     * here. The key is the name of the Omise event type with the `.` replaced by a `_`.
+     * here. The key is the name of the Omise event type (called key for Omise) with the `.` replaced by a `_`.
      *
      * You can find a list of Omise webhook types here:
      * https://docs.opn.ooo/api-webhooks#supported-events.
@@ -69,7 +68,7 @@ return [
     /**
      * This class determines if the webhook call should be stored and processed.
      */
-    'profile' => \Soap\OmiseWebhooks\OmiseWebhookProfile::class,
+    'profile' => \Soap\OmiseWebhooks\OmiseWebhooksProfile::class,
 
     /*
      * Specify a connection and or a queue to process the webhooks
@@ -81,5 +80,11 @@ return [
      * When disabled, the package will not verify if the signature is valid.
      * This can be handy in local environments.
      */
-    'verify_signature' => env('OMISE_SIGNATURE_VERIFICATION', true),
+    'verify_signature' => env('OMISE_SIGNATURE_VERIFICATION', false),
+
+    /*
+     * When `verify_ip` is enabled, this setting determines if the signature should be
+     * validated using request 's IP address.
+     */
+    'verify_ip' => env('OMISE_IP_VERIFICATION', false),
 ];
