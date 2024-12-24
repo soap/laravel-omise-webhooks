@@ -122,9 +122,9 @@ php artisan migrate
 ```
 Finally, take care of the routing: At the Omise dashboard you must configure at what url Omise webhooks should hit your app. In the routes file of your app you must pass that route to ``` Route::stripeWebhooks```:
 ```
-Route::stripeWebhooks('webhook-route-configured-at-the-omise-dashboard');
+Route::omiseWebhooks('webhook-route-configured-at-the-omise-dashboard');
 ```
-Behind the scenes this will register a POST route to a controller provided by this package. Because Stripe has no way of getting a csrf-token, you must add that route to the except array of the VerifyCsrfToken middleware:
+Behind the scenes this will register a POST route to a controller provided by this package. Because Omise has no way of getting a csrf-token, you must add that route to the except array of the VerifyCsrfToken middleware:
 ```php
 protected $except = [
     'webhook-route-configured-at-the-omise-dashboard',
