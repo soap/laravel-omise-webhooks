@@ -131,7 +131,7 @@ protected $except = [
 [Omise](https://www.omise.co/) will send out webhooks for serveral event types. You can find the full list of event types in Omise documentation.
 
 However, Omise doesnot sign requests sending to our application. So, for simplicity we check only source IPs from Omise. Omise reccomends us to re-verify object status again.
-You can customise it your self using [Laravel-Omise](https://github.com/soap/laravel-omise) package.
+You can customise it yourself using [Laravel-Omise](https://github.com/soap/laravel-omise) package.
 
 Unless something goes terribly wrong, this package will always respond with a 200 to webhook requests. Sending a 200 will prevent Omise from resending the same event over and over again. Omise might occasionally send a duplicate webhook request more than once. This package makes sure that each request will only be processed once. All webhook requests with a valid source IP will be logged in the webhook_calls table. The table has a payload column where the entire payload of the incoming webhook is saved.
 
@@ -139,12 +139,43 @@ If the source IP is not valid, the request will not be logged in the webhook_cal
 
 There are two ways this package enables you to handle webhook requests: you can opt to queue a job or listen to the events the package will fire.
 #### Handling webhook request using jobs
+If you want to do something when a specific event type comes in you can define a job that does the work. Here's an example of such a job:
+```php
+```
+We highly recommend that you make this job queueable, because this will minimize the response time of the webhook requests. This allows you to handle more stripe webhook requests and avoid timeouts.
+
+After having created your job you must register it at the jobs array in the omise-webhooks.php config file. The key should be the name of the stripe event type where but with the . replaced by _. The value should be the fully qualified classname. In the configuration file, most of events are configured but commented out. So you can should the desired event and uncomment the line.
+```php
+```
+In case you want to configure one job as default to process all undefined event, you may set the job at default_job in the omise-webhooks.php config file. The value should be the fully qualified classname.
+```php
+// config/stripe-webhooks.php
+'default_job' => \App\Jobs\OmiseWebhooks\HandleOtherEvent::class,
+```
 
 #### Handling webhook request using events
+Instead of queueing jobs to perform some work when a webhook request comes in, you can opt to listen to the events this package will fire. Whenever a valid request hits your app, the package will fire a omise-webhooks::<name-of-the-event> event.
+The payload of the events will be the instance of WebhookCall that was created for the incoming request.
 
+Let's take a look at how you can listen for such an event. In the EventServiceProvider you can register listeners
+```php
+/**
+ * The event listener mappings for the application.
+ *
+ * @var array
+ */
+protected $listen = [
+    'omise-webhooks::charge.expire' => [
+        App\Listeners\ChargeExpire::class,
+    ],
+];
+```
 ### Create your webhook endpoint.
+
 ### Register route.
+
 ### Exclude CSRF verification on the webhook route.
+
 ### Create jobs to handle webhook calls.
 ```php
 
