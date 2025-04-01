@@ -31,13 +31,9 @@ This is the contents of the published config file:
 ```php
 return [
       /*
-     * Stripe will sign each webhook using a secret. You can find the used secret at the
-     * webhook configuration settings: https://dashboard.stripe.com/account/webhooks.
-     */
-    'signing_secret' => env('OMISE_WEBHOOK_SECRET'),
 
     /*
-     * You can define a default job that should be run for all other Stripe event type
+     * You can define a default job that should be run for all other Omise event type
      * without a job defined in next configuration.
      * You may leave it empty to store the job in database but without processing it.
      */
@@ -120,7 +116,7 @@ After the migration has been published you can create the webhook_calls table by
 ```
 php artisan migrate
 ```
-Finally, take care of the routing: At the Omise dashboard you must configure at what url Omise webhooks should hit your app. In the routes file of your app you must pass that route to ``` Route::stripeWebhooks```:
+Finally, take care of the routing: At the Omise dashboard you must configure at what url Omise webhooks should hit your app. In the routes file of your app you must pass that route to ``` Route::omiseWebhooks```:
 ```
 Route::omiseWebhooks('webhook-route-configured-at-the-omise-dashboard');
 ```
