@@ -3,6 +3,7 @@
 namespace Soap\OmiseWebhooks;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Spatie\WebhookClient\SignatureValidator\SignatureValidator;
 use Spatie\WebhookClient\WebhookConfig;
 
@@ -23,7 +24,7 @@ class OmiseSignatureValidator implements SignatureValidator
         return false;
     }
 
-    protected function getWebhookIps(): string
+    protected function getWebhookIps(): array
     {
         $defindedIps = [
             '54.169.118.227',
