@@ -2,6 +2,15 @@
 
 All notable changes to `laravel-omise-webhooks` will be documented in this file.
 
+## Lock soap/laravel-omise to version 1.x - 2025-10-23
+
+### What's Changed
+
+* fix: soap/laravel-omise to version 1.x by @soap in https://github.com/soap/laravel-omise-webhooks/pull/9
+* Bump stefanzweifel/git-auto-commit-action from 6 to 7 by @dependabot[bot] in https://github.com/soap/laravel-omise-webhooks/pull/8
+
+**Full Changelog**: https://github.com/soap/laravel-omise-webhooks/compare/v1.1.0...v1.1.1
+
 ## Laravel 12 support. - 2025-09-05
 
 ### What's Changed
