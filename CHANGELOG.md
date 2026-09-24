@@ -2,6 +2,16 @@
 
 All notable changes to `laravel-omise-webhooks` will be documented in this file.
 
+## Laravel 13 support - 2026-09-24
+
+### What's Changed
+
+* Bump dependabot/fetch-metadata from 2.4.0 to 2.5.0 by @dependabot[bot] in https://github.com/soap/laravel-omise-webhooks/pull/11
+* Bump dependabot/fetch-metadata from 2.5.0 to 3.1.0 by @dependabot[bot] in https://github.com/soap/laravel-omise-webhooks/pull/14
+* Add laravel 13 support by @soap in https://github.com/soap/laravel-omise-webhooks/pull/16
+
+**Full Changelog**: https://github.com/soap/laravel-omise-webhooks/compare/v1.1.1...v1.2.0
+
 ## Lock soap/laravel-omise to version 1.x - 2025-10-23
 
 ### What's Changed
