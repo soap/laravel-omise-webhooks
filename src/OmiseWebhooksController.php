@@ -19,7 +19,7 @@ class OmiseWebhooksController
             'signature_validator' => OmiseSignatureValidator::class,
             'webhook_profile' => config('omise-webhooks.profile'),
             'webhook_model' => config('omise-webhooks.model'),
-            'process_webhook_job' => ProcessOmiseWebhooksJob::class,
+            'process_webhook_job' => config('omise-webhooks.process_webhook_job', ProcessOmiseWebhooksJob::class),
         ]);
 
         return (new WebhookProcessor($request, $webhookConfig))->process();

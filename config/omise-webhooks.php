@@ -1,6 +1,7 @@
 <?php
 
 use Soap\OmiseWebhooks\OmiseWebhooksProfile;
+use Soap\OmiseWebhooks\ProcessOmiseWebhooksJob;
 use Spatie\WebhookClient\Models\WebhookCall;
 
 // config for Soap/OmiseWebhooks
@@ -31,6 +32,7 @@ return [
         // 'card_update' => \App\Jobs\OmiseWebhooks\HandleCardUpdate::class,
 
         // 'charge_capture' => \App\Jobs\OmiseWebhooks\HandleChargeCapture::class,
+        // 'charge_complete' => \App\Jobs\OmiseWebhooks\HandleChargeComplete::class,
         // 'charge_create' => \App\Jobs\OmiseWebhooks\HandleChargeCreate::class,
         // 'charge_expire' => \App\Jobs\OmiseWebhooks\HandleChargeExpire::class,
         // 'charge_reverse' => \App\Jobs\OmiseWebhooks\HandleChargeReverse::class,
@@ -74,6 +76,12 @@ return [
      * This class determines if the webhook call should be stored and processed.
      */
     'profile' => OmiseWebhooksProfile::class,
+
+    /*
+     * The job that fires the events and dispatches your jobs for a stored webhook call.
+     * The class should equal or extend Soap\OmiseWebhooks\ProcessOmiseWebhooksJob.
+     */
+    'process_webhook_job' => ProcessOmiseWebhooksJob::class,
 
     /*
      * Specify a connection and or a queue to process the webhooks

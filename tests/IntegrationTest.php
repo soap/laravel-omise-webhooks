@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
+use Soap\OmiseWebhooks\Tests\CustomProcessJob;
 use Soap\OmiseWebhooks\Tests\DummyJob;
 use Spatie\WebhookClient\Models\WebhookCall;
 
@@ -39,5 +40,19 @@ it('can handle a valid request', function () {
         return true;
     });
 
+    $this->assertEquals($webhookCall->id, cache('dummyjob')->id);
+});
+
+it('can use a custom process webhook job', function () {
+    $this->withoutExceptionHandling();
+
+    config(['omise-webhooks.process_webhook_job' => CustomProcessJob::class]);
+
+    $this->postJson('omise/webhooks', ['key' => 'my.key'])
+        ->assertSuccessful();
+
+    $webhookCall = WebhookCall::first();
+
+    $this->assertEquals($webhookCall->id, cache('customprocessjob')->id);
     $this->assertEquals($webhookCall->id, cache('dummyjob')->id);
 });
