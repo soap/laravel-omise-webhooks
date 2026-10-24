@@ -2,6 +2,15 @@
 
 All notable changes to `laravel-omise-webhooks` will be documented in this file.
 
+## Implement signing request verification - 2026-10-24
+
+### What's Changed
+
+* Bump actions/checkout from 5 to 7 by @dependabot[bot] in https://github.com/soap/laravel-omise-webhooks/pull/15
+* Bump ramsey/composer-install from 3 to 4 by @dependabot[bot] in https://github.com/soap/laravel-omise-webhooks/pull/12
+
+**Full Changelog**: https://github.com/soap/laravel-omise-webhooks/compare/v1.2.0...v1.2.1
+
 ## Laravel 13 support - 2026-09-24
 
 ### What's Changed
