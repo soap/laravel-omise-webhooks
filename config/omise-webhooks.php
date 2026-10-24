@@ -6,7 +6,9 @@ use Spatie\WebhookClient\Models\WebhookCall;
 // config for Soap/OmiseWebhooks
 return [
     /*
-     * Omise doest not sign each webhook using a secret. This may be added in the future.
+     * The webhook secret (base64-encoded) shown in the Omise dashboard.
+     * It is used to verify the `Omise-Signature` header of incoming webhooks.
+     * See https://docs.omise.co/api-webhooks#webhook-signature-verification
      */
     'signing_secret' => env('OMISE_WEBHOOK_SECRET'),
 
@@ -84,6 +86,12 @@ return [
      * This can be handy in local environments.
      */
     'verify_signature' => env('OMISE_SIGNATURE_VERIFICATION', false),
+
+    /*
+     * The maximum age (in seconds) of the `Omise-Signature-Timestamp` header,
+     * used to protect against replay attacks. Set to 0 to disable this check.
+     */
+    'signature_tolerance' => env('OMISE_SIGNATURE_TOLERANCE', 300),
 
     /*
      * When `verify_ip` is enabled, this setting determines if the signature should be

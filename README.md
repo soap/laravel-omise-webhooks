@@ -130,8 +130,19 @@ protected $except = [
 ## Usage
 [Omise](https://www.omise.co/) will send out webhooks for serveral event types. You can find the full list of event types in Omise documentation.
 
-However, Omise doesnot sign requests sending to our application. So, for simplicity we check only source IPs from Omise. Omise reccomends us to re-verify object status again.
-You can customise it yourself using [Laravel-Omise](https://github.com/soap/laravel-omise) package.
+### Webhook signature verification
+Omise signs every webhook request with the `Omise-Signature` and `Omise-Signature-Timestamp` headers ([documentation](https://docs.omise.co/api-webhooks#webhook-signature-verification)). To verify them, copy the webhook secret from the Omise dashboard and enable verification in your `.env`:
+```
+OMISE_WEBHOOK_SECRET=your-base64-webhook-secret
+OMISE_SIGNATURE_VERIFICATION=true
+# Optional: maximum age of the signature timestamp in seconds (default 300, 0 disables the check)
+OMISE_SIGNATURE_TOLERANCE=300
+```
+The package computes an HMAC-SHA256 of `<timestamp>.<raw body>` using the base64-decoded secret and compares it with the signature header in constant time. While a secret is being rolled, Omise sends two comma-separated signatures; a match against either one is accepted.
+
+If you receive webhooks from multiple Omise accounts, define `signing_secret_{configKey}` in the config file and register the route with a `{configKey}` parameter, e.g. `Route::omiseWebhooks('omise/webhooks/{configKey}')`.
+
+You can additionally restrict requests to Omise's webhook source IPs by setting `OMISE_IP_VERIFICATION=true`. Omise still recommends re-fetching the object to verify its status, which you can do with the [Laravel-Omise](https://github.com/soap/laravel-omise) package.
 
 Unless something goes terribly wrong, this package will always respond with a 200 to webhook requests. Sending a 200 will prevent Omise from resending the same event over and over again. Omise might occasionally send a duplicate webhook request more than once. This package makes sure that each request will only be processed once. All webhook requests with a valid source IP will be logged in the webhook_calls table. The table has a payload column where the entire payload of the incoming webhook is saved.
 
