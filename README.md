@@ -131,7 +131,7 @@ return [
 In the `signing_secret` key of the config file you should add a valid webhook secret. You can find the secret in the [webhook settings of the Omise dashboard](https://dashboard.omise.co/v2/settings/webhooks).
 
 > [!IMPORTANT]
-> Signature verification is **disabled by default**. Always set `OMISE_SIGNATURE_VERIFICATION=true` in production.
+> Signature verification is **enabled by default**, and requests are rejected when no signing secret is configured. Outside production, you may set `OMISE_SIGNATURE_VERIFICATION=false` until you have configured a secret. Never disable it in production.
 
 Next, you must publish the migration with:
 ```bash
