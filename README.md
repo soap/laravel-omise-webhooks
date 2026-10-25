@@ -19,10 +19,10 @@ This package is built on top of [spatie/laravel-webhook-client](https://github.c
 
 ## Versions
 
-| Version | Branch | PHP | Laravel |
-|---------|--------|-----|---------|
-| 2.x | [`main`](https://github.com/soap/laravel-omise-webhooks/tree/main) | ^8.3 | 10 – 13 |
-| 1.x | [`v1.x`](https://github.com/soap/laravel-omise-webhooks/tree/v1.x) | ^8.3 | 10 – 13 |
+| Version | Branch | PHP | Laravel | Support |
+|---------|--------|-----|---------|---------|
+| 2.x | [`main`](https://github.com/soap/laravel-omise-webhooks/tree/main) | ^8.3 | 10 – 13 | Active |
+| 1.x | [`v1.x`](https://github.com/soap/laravel-omise-webhooks/tree/v1.x) | ^8.3 | 10 – 13 | Security fixes until December 2027 |
 
 Version 2 verifies signatures by default and supports resolving signing secrets per tenant. If you are upgrading from 1.x, see [Upgrading from 1.x](#upgrading-from-1x).
 
