@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Http;
 use Soap\OmiseWebhooks\Exceptions\InvalidOmiseSignature;
 use Spatie\WebhookClient\SignatureValidator\SignatureValidator;
 use Spatie\WebhookClient\WebhookConfig;
+use Throwable;
 
 class OmiseSignatureValidator implements SignatureValidator
 {
@@ -104,11 +105,14 @@ class OmiseSignatureValidator implements SignatureValidator
             '18.139.13.19',
         ];
 
-        $response = Http::get('https://cdn.omise.co/ips.json');
-        if ($response->ok()) {
-            return $response->json('webhooks', $defindedIps);
+        try {
+            $response = Http::timeout(5)->get('https://cdn.omise.co/ips.json');
+        } catch (Throwable) {
+            return $defindedIps;
         }
 
-        return $defindedIps;
+        $ips = $response->ok() ? $response->json('webhooks') : null;
+
+        return is_array($ips) ? $ips : $defindedIps;
     }
 }

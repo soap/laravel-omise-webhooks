@@ -1,7 +1,9 @@
 <?php
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Soap\OmiseWebhooks\Exceptions\InvalidOmiseSignature;
 use Soap\OmiseWebhooks\OmiseSignatureValidator;
@@ -217,4 +219,41 @@ describe('standalone verification', function () {
     it('ignores the verify_signature config', function () {
         expect(OmiseSignatureValidator::verify(omiseRequest($this->body, []), $this->secret))->toBeFalse();
     });
+});
+
+describe('ip verification', function () {
+    beforeEach(function () {
+        config([
+            'omise-webhooks.verify_ip' => true,
+            'omise-webhooks.verify_signature' => false,
+        ]);
+    });
+
+    it('accepts a request from an ip in the published list', function () {
+        Http::fake(['cdn.omise.co/*' => Http::response(['webhooks' => ['203.0.113.10']])]);
+
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.10'])
+            ->postJson('omise/webhooks', $this->payload)
+            ->assertSuccessful();
+    });
+
+    it('rejects a request from an unknown ip', function () {
+        Http::fake(['cdn.omise.co/*' => Http::response(['webhooks' => ['203.0.113.10']])]);
+
+        $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.1'])
+            ->postJson('omise/webhooks', $this->payload)
+            ->assertStatus(403);
+    });
+
+    it('falls back to the known ips when the ip list cannot be fetched', function (Closure $response) {
+        Http::fake(['cdn.omise.co/*' => $response]);
+
+        $this->withServerVariables(['REMOTE_ADDR' => '54.169.118.227'])
+            ->postJson('omise/webhooks', $this->payload)
+            ->assertSuccessful();
+    })->with([
+        'connection error' => [fn () => fn () => throw new ConnectionException('timeout')],
+        'server error' => [fn () => fn () => Http::response(status: 503)],
+        'malformed response' => [fn () => fn () => Http::response(['webhooks' => 'nope'])],
+    ]);
 });
