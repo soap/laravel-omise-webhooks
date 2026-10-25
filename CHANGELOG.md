@@ -2,6 +2,18 @@
 
 All notable changes to `laravel-omise-webhooks` will be documented in this file.
 
+## Drop Laravel 10 and 11 support - 2026-10-25
+
+If you rely on Laravel 10 or 11 use version 1.x
+
+### What's Changed
+
+* Docs/readme v2 by @soap in https://github.com/soap/laravel-omise-webhooks/pull/18
+* Drop support for Laravel 10 and 11 by @soap in https://github.com/soap/laravel-omise-webhooks/pull/21
+* Fix/webhook ips fallback by @soap in https://github.com/soap/laravel-omise-webhooks/pull/20
+
+**Full Changelog**: https://github.com/soap/laravel-omise-webhooks/compare/v2.0.0...v2.1.0
+
 ## v2.0.0 - 2026-10-25
 
 ### What's Changed
