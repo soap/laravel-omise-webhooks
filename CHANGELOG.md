@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-omise-webhooks` will be documented in this file.
 
+## v2.0.0 - 2026-10-25
+
+### What's Changed
+
+* Support multi-tenant signing secrets and secure-by-default verification by @soap in https://github.com/soap/laravel-omise-webhooks/pull/17
+
+**Full Changelog**: https://github.com/soap/laravel-omise-webhooks/compare/v1.2.1...v2.0.0
+
 ## Implement signing request verification - 2026-10-24
 
 ### What's Changed
