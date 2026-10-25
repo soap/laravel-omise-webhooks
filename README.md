@@ -17,12 +17,21 @@ This package is built on top of [spatie/laravel-webhook-client](https://github.c
 
 
 
+## Versions
+
+| Version | Branch | PHP | Laravel | Support |
+|---------|--------|-----|---------|---------|
+| 2.x | [`main`](https://github.com/soap/laravel-omise-webhooks/tree/main) | ^8.3 | 10 – 13 | Active |
+| 1.x | [`v1.x`](https://github.com/soap/laravel-omise-webhooks/tree/v1.x) | ^8.3 | 10 – 13 | Security fixes until December 2027 |
+
+Version 2 verifies signatures by default and supports resolving signing secrets per tenant. If you are upgrading from 1.x, see [Upgrading from 1.x](#upgrading-from-1x).
+
 ## Installation
 
 You can install the package via composer:
 
 ```bash
-composer require soap/laravel-omise-webhooks
+composer require soap/laravel-omise-webhooks:^2.0
 ```
 The service provider will automatically register itself.
 
@@ -221,7 +230,7 @@ Unless something goes terribly wrong, this package will always respond with a `2
 
 - **Valid requests** are stored in the `webhook_calls` table. The `payload` column holds the entire payload of the incoming webhook. A `ProcessOmiseWebhooksJob` is then dispatched (on the configured connection and queue) which fires an event and dispatches your job.
 - **Duplicate requests**: Omise might occasionally send the same event more than once. `OmiseWebhooksProfile` skips any event whose `id` has already been stored, so each event is processed only once.
-- **Invalid requests** (wrong signature, expired timestamp or, when enabled, an unknown source IP) are not stored. A `Spatie\WebhookClient\Exceptions\InvalidWebhookSignature` exception is thrown and a `Spatie\WebhookClient\Events\InvalidWebhookSignatureEvent` event is fired.
+- **Invalid requests** (missing or wrong signature, expired timestamp, no signing secret configured or, when enabled, an unknown source IP) are not stored. The controller responds with a `403` and a `Spatie\WebhookClient\Events\InvalidWebhookSignatureEvent` event is fired.
 - **Errors**: if something goes wrong while dispatching the processing job, the exception is saved in the `exception` column of the stored webhook call and the controller responds with a `500`.
 
 There are two ways this package enables you to handle webhook requests: you can opt to queue a job or listen to the events the package will fire.
@@ -507,6 +516,20 @@ it('stores an omise webhook call', function () {
     Bus::assertDispatched(ProcessOmiseWebhooksJob::class);
 });
 ```
+
+## Upgrading from 1.x
+
+Version 2 contains the following breaking changes:
+
+- **Signature verification is enabled by default.** `OMISE_SIGNATURE_VERIFICATION` now defaults to `true`. Make sure `OMISE_WEBHOOK_SECRET` (and any `signing_secret_{configKey}` values) are set before upgrading, or explicitly set `OMISE_SIGNATURE_VERIFICATION=false` in local environments. If you published the config file, update the default of `verify_signature` there as well.
+- **Requests without a signing secret are rejected.** Previously a missing secret threw `Spatie\WebhookClient\Exceptions\InvalidConfig`; now the request is treated as invalid.
+- **Rejected requests return `403` instead of `500`.** `InvalidWebhookSignatureEvent` is still fired, so listen to it if you relied on the exception being reported.
+- **`OmiseSignatureValidator::hasValidSignature()` was removed.** If you extended the validator, override `isValid()` or use the static [`verify()`, `verifySignature()` or `assertValid()`](#verifying-a-signature-yourself) methods instead.
+
+New in version 2:
+
+- [`OmiseWebhooks::resolveSigningSecretUsing()`](#resolving-signing-secrets-at-runtime-multi-tenancy) to resolve the signing secret per request, e.g. per tenant.
+- [Config-independent signature verification](#verifying-a-signature-yourself) for webhooks handled outside the package's route.
 
 ## Testing
 
