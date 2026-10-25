@@ -21,10 +21,10 @@ This package is built on top of [spatie/laravel-webhook-client](https://github.c
 
 | Version | Branch | PHP | Laravel | Support |
 |---------|--------|-----|---------|---------|
-| 2.x | [`main`](https://github.com/soap/laravel-omise-webhooks/tree/main) | ^8.3 | 10 – 13 | Active |
+| 2.x | [`main`](https://github.com/soap/laravel-omise-webhooks/tree/main) | ^8.3 | 12 – 13 | Active |
 | 1.x | [`v1.x`](https://github.com/soap/laravel-omise-webhooks/tree/v1.x) | ^8.3 | 10 – 13 | Security fixes until December 2027 |
 
-Version 2 verifies signatures by default and supports resolving signing secrets per tenant. If you are upgrading from 1.x, see [Upgrading from 1.x](#upgrading-from-1x).
+Version 2 verifies signatures by default and supports resolving signing secrets per tenant. It requires Laravel 12 or 13; on Laravel 10 or 11, use version 1.x. If you are upgrading from 1.x, see [Upgrading from 1.x](#upgrading-from-1x).
 
 ## Installation
 
@@ -149,7 +149,7 @@ Route::omiseWebhooks('omise/webhooks');
 ```
 Behind the scenes this will register a `POST` route to a controller provided by this package. Because Omise has no way of getting a csrf-token, you must exclude that route from CSRF verification.
 
-On Laravel 11 and up, do this in `bootstrap/app.php`:
+In applications with the Laravel 11+ structure, do this in `bootstrap/app.php`:
 ```php
 ->withMiddleware(function (Middleware $middleware) {
     $middleware->validateCsrfTokens(except: [
@@ -157,7 +157,7 @@ On Laravel 11 and up, do this in `bootstrap/app.php`:
     ]);
 })
 ```
-On Laravel 10, add the route to the `$except` array of the `VerifyCsrfToken` middleware:
+In applications that still have the `VerifyCsrfToken` middleware (e.g. upgraded from Laravel 10), add the route to its `$except` array:
 ```php
 protected $except = [
     'omise/webhooks',
@@ -300,7 +300,7 @@ Instead of queueing jobs to perform some work when a webhook request comes in, y
 
 The payload of the events will be the instance of `WebhookCall` that was created for the incoming request.
 
-On Laravel 11 and up, register the listener in the `boot` method of your `AppServiceProvider`:
+Register the listener in the `boot` method of your `AppServiceProvider`:
 ```php
 use App\Listeners\ChargeCompleteListener;
 use Illuminate\Support\Facades\Event;
@@ -310,7 +310,7 @@ public function boot(): void
     Event::listen('omise-webhooks::charge.complete', ChargeCompleteListener::class);
 }
 ```
-On Laravel 10, you can register listeners in the `EventServiceProvider`:
+In applications that still have an `EventServiceProvider` (e.g. upgraded from Laravel 10), you can register listeners there instead:
 ```php
 /**
  * The event listener mappings for the application.
@@ -521,6 +521,7 @@ it('stores an omise webhook call', function () {
 
 Version 2 contains the following breaking changes:
 
+- **Laravel 12 or 13 is required.** Support for Laravel 10 and 11 was dropped in 2.1.0 because Composer no longer installs them due to unpatched security advisories. Stay on 1.x until you upgrade Laravel.
 - **Signature verification is enabled by default.** `OMISE_SIGNATURE_VERIFICATION` now defaults to `true`. Make sure `OMISE_WEBHOOK_SECRET` (and any `signing_secret_{configKey}` values) are set before upgrading, or explicitly set `OMISE_SIGNATURE_VERIFICATION=false` in local environments. If you published the config file, update the default of `verify_signature` there as well.
 - **Requests without a signing secret are rejected.** Previously a missing secret threw `Spatie\WebhookClient\Exceptions\InvalidConfig`; now the request is treated as invalid.
 - **Rejected requests return `403` instead of `500`.** `InvalidWebhookSignatureEvent` is still fired, so listen to it if you relied on the exception being reported.
