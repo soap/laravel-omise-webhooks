@@ -90,10 +90,11 @@ return [
     'queue' => env('OMISE_WEBHOOK_QUEUE'),
 
     /*
-     * When disabled, the package will not verify if the signature is valid.
-     * This can be handy in local environments.
+     * Signatures are verified by default; requests without a valid signature, or for which
+     * no signing secret is configured, are rejected with a 403 response.
+     * Only disable this in local environments.
      */
-    'verify_signature' => env('OMISE_SIGNATURE_VERIFICATION', false),
+    'verify_signature' => env('OMISE_SIGNATURE_VERIFICATION', true),
 
     /*
      * The maximum age (in seconds) of the `Omise-Signature-Timestamp` header,

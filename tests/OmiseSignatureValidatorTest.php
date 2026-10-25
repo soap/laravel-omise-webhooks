@@ -1,7 +1,11 @@
 <?php
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
+use Soap\OmiseWebhooks\Exceptions\InvalidOmiseSignature;
+use Soap\OmiseWebhooks\OmiseSignatureValidator;
+use Soap\OmiseWebhooks\OmiseWebhooks;
 use Soap\OmiseWebhooks\Tests\DummyJob;
 use Spatie\WebhookClient\Models\WebhookCall;
 
@@ -18,6 +22,10 @@ beforeEach(function () {
     ]);
 
     $this->payload = ['id' => 'evnt_test_1', 'key' => 'my.key', 'name' => 'value'];
+});
+
+afterEach(function () {
+    OmiseWebhooks::flushState();
 });
 
 function omiseHeaders(array $payload, string|array $secrets, ?int $timestamp = null): array
@@ -60,13 +68,13 @@ it('uses the signing secret of the given config key', function () {
 
 it('rejects a request with an invalid signature', function () {
     $this->postJson('omise/webhooks', $this->payload, omiseHeaders($this->payload, 'wrong_secret'))
-        ->assertStatus(500);
+        ->assertStatus(403);
 
     expect(WebhookCall::count())->toBe(0);
 });
 
 it('rejects a request without signature headers', function () {
-    $this->postJson('omise/webhooks', $this->payload)->assertStatus(500);
+    $this->postJson('omise/webhooks', $this->payload)->assertStatus(403);
 
     expect(WebhookCall::count())->toBe(0);
 });
@@ -75,7 +83,7 @@ it('rejects a request whose payload was tampered with', function () {
     $headers = omiseHeaders($this->payload, 'current_secret');
 
     $this->postJson('omise/webhooks', [...$this->payload, 'name' => 'changed'], $headers)
-        ->assertStatus(500);
+        ->assertStatus(403);
 
     expect(WebhookCall::count())->toBe(0);
 });
@@ -83,7 +91,7 @@ it('rejects a request whose payload was tampered with', function () {
 it('rejects a request with an expired timestamp', function () {
     $headers = omiseHeaders($this->payload, 'current_secret', time() - 301);
 
-    $this->postJson('omise/webhooks', $this->payload, $headers)->assertStatus(500);
+    $this->postJson('omise/webhooks', $this->payload, $headers)->assertStatus(403);
 
     expect(WebhookCall::count())->toBe(0);
 });
@@ -103,4 +111,110 @@ it('does not verify the signature when verification is disabled', function () {
     $this->postJson('omise/webhooks', $this->payload)->assertSuccessful();
 
     expect(WebhookCall::count())->toBe(1);
+});
+
+it('verifies the signature by default', function () {
+    $config = require __DIR__.'/../config/omise-webhooks.php';
+
+    expect($config['verify_signature'])->toBeTrue();
+});
+
+it('rejects a request when no signing secret is configured', function () {
+    config(['omise-webhooks.signing_secret' => null]);
+
+    $this->postJson('omise/webhooks', $this->payload, omiseHeaders($this->payload, ''))
+        ->assertStatus(403);
+
+    expect(WebhookCall::count())->toBe(0);
+});
+
+it('rejects a request for an unknown config key', function () {
+    $this->postJson('omise/webhooks/unknown', $this->payload, omiseHeaders($this->payload, 'current_secret'))
+        ->assertStatus(403);
+
+    expect(WebhookCall::count())->toBe(0);
+});
+
+it('uses the signing secret resolver instead of the config', function () {
+    $resolvedFor = [];
+
+    OmiseWebhooks::resolveSigningSecretUsing(function (Request $request, ?string $configKey) use (&$resolvedFor) {
+        $resolvedFor[] = $configKey;
+
+        return base64_encode("tenant_{$configKey}_secret");
+    });
+
+    $this->postJson('omise/webhooks/acme', $this->payload, omiseHeaders($this->payload, 'tenant_acme_secret'))
+        ->assertSuccessful();
+
+    expect($resolvedFor)->toBe(['acme'])
+        ->and(WebhookCall::count())->toBe(1);
+});
+
+it('rejects a request signed with the config secret when a resolver is set', function () {
+    OmiseWebhooks::resolveSigningSecretUsing(fn () => base64_encode('tenant_secret'));
+
+    $this->postJson('omise/webhooks', $this->payload, omiseHeaders($this->payload, 'current_secret'))
+        ->assertStatus(403);
+
+    expect(WebhookCall::count())->toBe(0);
+});
+
+it('rejects a request when the resolver returns no secret', function () {
+    OmiseWebhooks::resolveSigningSecretUsing(fn () => null);
+
+    $this->postJson('omise/webhooks/acme', $this->payload, omiseHeaders($this->payload, ''))
+        ->assertStatus(403);
+
+    expect(WebhookCall::count())->toBe(0);
+});
+
+describe('standalone verification', function () {
+    beforeEach(function () {
+        config(['omise-webhooks.verify_signature' => false]);
+        $this->body = json_encode($this->payload);
+        $this->secret = base64_encode('current_secret');
+    });
+
+    function omiseRequest(string $body, array $headers): Request
+    {
+        $server = collect($headers)->mapWithKeys(fn ($value, $name) => ['HTTP_'.strtoupper(str_replace('-', '_', $name)) => $value])->all();
+
+        return Request::create('/', 'POST', server: $server, content: $body);
+    }
+
+    it('verifies a request without reading the config', function () {
+        $request = omiseRequest($this->body, omiseHeaders($this->payload, 'current_secret'));
+
+        expect(OmiseSignatureValidator::verify($request, $this->secret))->toBeTrue()
+            ->and(OmiseSignatureValidator::verify($request, base64_encode('wrong_secret')))->toBeFalse();
+    });
+
+    it('verifies a raw payload', function () {
+        $headers = omiseHeaders($this->payload, ['old_secret', 'current_secret']);
+
+        expect(OmiseSignatureValidator::verifySignature(
+            $this->body, $headers['Omise-Signature'], $headers['Omise-Signature-Timestamp'], $this->secret,
+        ))->toBeTrue();
+    });
+
+    it('fails with a reason', function (?string $signature, ?string $timestamp, string $secret, int $tolerance, string $reason) {
+        $headers = omiseHeaders($this->payload, 'current_secret', $timestamp && ctype_digit($timestamp) ? (int) $timestamp : null);
+
+        expect(fn () => OmiseSignatureValidator::assertValid(
+            $this->body, $signature ?? $headers['Omise-Signature'], $timestamp, $secret, $tolerance,
+        ))->toThrow(InvalidOmiseSignature::class, $reason);
+    })->with([
+        'missing signature' => ['', (string) time(), 'Y3VycmVudF9zZWNyZXQ=', 300, 'header is missing'],
+        'missing timestamp' => [null, null, 'Y3VycmVudF9zZWNyZXQ=', 300, 'header is missing'],
+        'non-numeric timestamp' => [null, 'abc', 'Y3VycmVudF9zZWNyZXQ=', 300, 'not a valid timestamp'],
+        'expired timestamp' => [null, (string) (time() - 301), 'Y3VycmVudF9zZWNyZXQ=', 300, 'outside the allowed tolerance'],
+        'empty secret' => [null, (string) time(), '', 300, 'empty or not valid base64'],
+        'invalid base64 secret' => [null, (string) time(), '***', 300, 'empty or not valid base64'],
+        'wrong secret' => [null, (string) time(), 'd3Jvbmdfc2VjcmV0', 300, 'does not match'],
+    ]);
+
+    it('ignores the verify_signature config', function () {
+        expect(OmiseSignatureValidator::verify(omiseRequest($this->body, []), $this->secret))->toBeFalse();
+    });
 });
