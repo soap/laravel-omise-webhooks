@@ -13,6 +13,9 @@ Before using this package we highly recommend reading [the entire documentation 
 
 This package is built on top of [spatie/laravel-webhook-client](https://github.com/spatie/laravel-webhook-client) and is heavily inspired by [spatie/laravel-stripe-webhooks](https://github.com/spatie/laravel-stripe-webhooks).
 
+> [!IMPORTANT]
+> This is the documentation for version 1.x, which receives **security fixes only until December 2027**. Version 2 verifies signatures by default and supports resolving signing secrets per tenant. See the [2.x documentation](https://github.com/soap/laravel-omise-webhooks/tree/main#readme) and its [upgrade guide](https://github.com/soap/laravel-omise-webhooks/tree/main#upgrading-from-1x).
+
 ## Support us
 
 
@@ -22,7 +25,7 @@ This package is built on top of [spatie/laravel-webhook-client](https://github.c
 You can install the package via composer:
 
 ```bash
-composer require soap/laravel-omise-webhooks
+composer require soap/laravel-omise-webhooks:^1.0
 ```
 The service provider will automatically register itself.
 
