@@ -12,7 +12,10 @@ beforeEach(function () {
     Route::omiseWebhooks('omise/webhooks');
     Route::omiseWebhooks('omise/webhooks/{configKey}');
 
-    config(['omise-webhooks.jobs' => ['my_key' => DummyJob::class]]);
+    config([
+        'omise-webhooks.jobs' => ['my_key' => DummyJob::class],
+        'omise-webhooks.verify_signature' => false,
+    ]);
     cache()->clear();
 });
 

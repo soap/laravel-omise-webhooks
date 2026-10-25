@@ -99,10 +99,11 @@ return [
     'queue' => env('OMISE_WEBHOOK_QUEUE'),
 
     /*
-     * When disabled, the package will not verify if the signature is valid.
-     * This can be handy in local environments.
+     * Signatures are verified by default; requests without a valid signature, or for which
+     * no signing secret is configured, are rejected with a 403 response.
+     * Only disable this in local environments.
      */
-    'verify_signature' => env('OMISE_SIGNATURE_VERIFICATION', false),
+    'verify_signature' => env('OMISE_SIGNATURE_VERIFICATION', true),
 
     /*
      * The maximum age (in seconds) of the `Omise-Signature-Timestamp` header,
@@ -184,14 +185,31 @@ Every webhook call is an Omise *event* object. The event type is found in the `k
 ```
 
 ### Webhook signature verification
-Omise signs every webhook request with the `Omise-Signature` and `Omise-Signature-Timestamp` headers ([documentation](https://docs.omise.co/api-webhooks#webhook-signature-verification)). To verify them, copy the webhook secret from the Omise dashboard and enable verification in your `.env`:
+Omise signs every webhook request with the `Omise-Signature` and `Omise-Signature-Timestamp` headers ([documentation](https://docs.omise.co/api-webhooks#webhook-signature-verification)). Verification is enabled by default, so copy the webhook secret from the Omise dashboard to your `.env`:
 ```
 OMISE_WEBHOOK_SECRET=your-base64-webhook-secret
-OMISE_SIGNATURE_VERIFICATION=true
 # Optional: maximum age of the signature timestamp in seconds (default 300, 0 disables the check)
 OMISE_SIGNATURE_TOLERANCE=300
 ```
 The package computes an HMAC-SHA256 of `<timestamp>.<raw body>` using the base64-decoded secret and compares it with the signature header in constant time. While a secret is being rolled, Omise sends two comma-separated signatures; a match against either one is accepted.
+
+Requests with a missing or invalid signature are rejected with a `403` response, and so are all requests when no signing secret is configured. Rejected requests fire Spatie's `Spatie\WebhookClient\Events\InvalidWebhookSignatureEvent`, which you can listen to for logging.
+
+#### Verifying a signature yourself
+If you handle Omise webhooks in your own code instead of the package's route, you can use the validator directly. It does not read the package config and never skips verification:
+
+```php
+use Soap\OmiseWebhooks\OmiseSignatureValidator;
+
+// From a request
+OmiseSignatureValidator::verify($request, $base64Secret, tolerance: 300); // bool
+
+// From raw headers and body
+OmiseSignatureValidator::verifySignature($rawBody, $signatureHeader, $timestampHeader, $base64Secret, 300); // bool
+
+// Throws Soap\OmiseWebhooks\Exceptions\InvalidOmiseSignature with the reason of the failure
+OmiseSignatureValidator::assertValid($rawBody, $signatureHeader, $timestampHeader, $base64Secret, 300);
+```
 
 You can additionally restrict requests to Omise's webhook source IPs by setting `OMISE_IP_VERIFICATION=true`. The list of IPs is fetched from `https://cdn.omise.co/ips.json`.
 
@@ -442,6 +460,20 @@ Then add a signing secret for each key to the config file, using `signing_secret
 
 Finally, set the webhook url of each account in the Omise dashboard to e.g. `https://your-app.com/omise/webhooks/account1`.
 
+### Resolving signing secrets at runtime (multi-tenancy)
+When the secrets are stored per tenant, e.g. encrypted in the database, register a resolver in the `boot` method of a service provider. It receives the request and the `{configKey}` route parameter, and must return the base64-encoded secret as shown in the Omise dashboard. When a resolver is registered, the `signing_secret` config values are no longer used.
+
+```php
+use Illuminate\Http\Request;
+use Soap\OmiseWebhooks\OmiseWebhooks;
+
+OmiseWebhooks::resolveSigningSecretUsing(function (Request $request, ?string $configKey) {
+    return PaymentAccount::where('account_key', $configKey)->first()?->webhook_secret; // decrypted by an encrypted cast
+});
+```
+
+Returning `null` or an empty string rejects the request with a `403` response.
+
 ### Using a custom model
 If you want to add extra behaviour to the stored webhook calls, you can use your own model. It should extend `Spatie\WebhookClient\Models\WebhookCall`:
 
@@ -452,7 +484,7 @@ If you want to add extra behaviour to the stored webhook calls, you can use your
 ```
 
 ### Testing webhooks locally
-To receive webhooks on your local machine, expose your app with a tunnel such as [ngrok](https://ngrok.com/) or [Expose](https://expose.dev/) and set the public url as the webhook endpoint in the Omise test dashboard. You can leave `OMISE_SIGNATURE_VERIFICATION=false` locally if you do not want to configure the secret.
+To receive webhooks on your local machine, expose your app with a tunnel such as [ngrok](https://ngrok.com/) or [Expose](https://expose.dev/) and set the public url as the webhook endpoint in the Omise test dashboard. You can set `OMISE_SIGNATURE_VERIFICATION=false` locally if you do not want to configure the secret.
 
 You can also send a fake webhook to your app in a feature test:
 

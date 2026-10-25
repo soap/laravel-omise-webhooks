@@ -4,12 +4,14 @@ namespace Soap\OmiseWebhooks;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Spatie\WebhookClient\Exceptions\InvalidConfig;
+use Soap\OmiseWebhooks\Exceptions\InvalidOmiseSignature;
 use Spatie\WebhookClient\SignatureValidator\SignatureValidator;
 use Spatie\WebhookClient\WebhookConfig;
 
 class OmiseSignatureValidator implements SignatureValidator
 {
+    public const SIGNATURE_HEADER = 'Omise-Signature';
+
     public const TIMESTAMP_HEADER = 'Omise-Signature-Timestamp';
 
     public function isValid(Request $request, WebhookConfig $config): bool
@@ -18,54 +20,80 @@ class OmiseSignatureValidator implements SignatureValidator
             return false;
         }
 
-        if (! config('omise-webhooks.verify_signature')) {
+        if (! config('omise-webhooks.verify_signature', true)) {
             return true;
         }
 
-        return $this->hasValidSignature($request, $config);
+        return static::verify($request, $config->signingSecret, (int) config('omise-webhooks.signature_tolerance', 300));
     }
 
     /**
-     * Verify the request following https://docs.omise.co/api-webhooks#webhook-signature-verification
+     * Verify the signature of an Omise webhook request, independent of the package config.
+     */
+    public static function verify(Request $request, string $secret, int $tolerance = 300): bool
+    {
+        return static::verifySignature(
+            $request->getContent(),
+            $request->header(self::SIGNATURE_HEADER),
+            $request->header(self::TIMESTAMP_HEADER),
+            $secret,
+            $tolerance,
+        );
+    }
+
+    /**
+     * Verify the signature of a raw Omise webhook payload, independent of the package config.
+     */
+    public static function verifySignature(string $rawBody, ?string $signatureHeader, ?string $timestamp, string $secret, int $tolerance = 300): bool
+    {
+        try {
+            static::assertValid($rawBody, $signatureHeader, $timestamp, $secret, $tolerance);
+        } catch (InvalidOmiseSignature) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Verify the payload following https://docs.omise.co/api-webhooks#webhook-signature-verification
      *
      * The signed payload is "<timestamp>.<raw body>", signed with HMAC-SHA256 using the
      * base64-decoded webhook secret. During secret rotation, the signature header holds
      * two comma-separated signatures, either of which may match.
+     * A tolerance of 0 disables the timestamp check.
+     *
+     * @throws InvalidOmiseSignature
      */
-    protected function hasValidSignature(Request $request, WebhookConfig $config): bool
+    public static function assertValid(string $rawBody, ?string $signatureHeader, ?string $timestamp, string $secret, int $tolerance = 300): void
     {
-        $signatureHeader = $request->header($config->signatureHeaderName);
-        $timestamp = $request->header(self::TIMESTAMP_HEADER);
-
-        if (! $signatureHeader || ! $timestamp || ! ctype_digit($timestamp)) {
-            return false;
+        if (! $signatureHeader || ! $timestamp) {
+            throw InvalidOmiseSignature::missingHeaders();
         }
 
-        if (empty($config->signingSecret)) {
-            throw InvalidConfig::signingSecretNotSet();
+        if (! ctype_digit($timestamp)) {
+            throw InvalidOmiseSignature::invalidTimestamp();
         }
-
-        $tolerance = (int) config('omise-webhooks.signature_tolerance', 300);
 
         if ($tolerance > 0 && abs(time() - (int) $timestamp) > $tolerance) {
-            return false;
+            throw InvalidOmiseSignature::timestampOutsideTolerance();
         }
 
-        $secret = base64_decode($config->signingSecret, true);
+        $decodedSecret = base64_decode($secret, true);
 
-        if ($secret === false) {
-            return false;
+        if ($decodedSecret === false || $decodedSecret === '') {
+            throw InvalidOmiseSignature::invalidSecret();
         }
 
-        $computedSignature = hash_hmac('sha256', $timestamp.'.'.$request->getContent(), $secret);
+        $computedSignature = hash_hmac('sha256', $timestamp.'.'.$rawBody, $decodedSecret);
 
         foreach (explode(',', $signatureHeader) as $signature) {
             if (hash_equals($computedSignature, trim($signature))) {
-                return true;
+                return;
             }
         }
 
-        return false;
+        throw InvalidOmiseSignature::signatureMismatch();
     }
 
     protected function getWebhookIps(): array
